@@ -1,0 +1,25 @@
+# Binary
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+grab-your-labubu
+
+# Tooling Go
+go.work
+
+# Database SQLite (Ignore so will not clash with server)
+*.db
+*.db-journal
+
+# Metadata OS
+.DS_Store
+Thumbs.db
+
+# Folder IDE (VS Code atau GoLand)
+.vscode/
+.idea/
+*.swp
+*.swo
