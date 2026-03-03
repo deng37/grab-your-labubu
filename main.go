@@ -13,10 +13,13 @@ import (
 )
 
 const ( WinnerSeparator = ", " )
+const ( UserId = 99999 )
 const ( NoOfStock = 10 )
 const ( NoOfPodium = 3 )
 const ( DefaultPort = "8080" )
 const ( EmptyString = "" )
+
+var podium chan int = make(chan int, NoOfPodium)
 
 func main() {
 	// Init
@@ -34,6 +37,7 @@ func main() {
 		success, message := engine.GrabItem(store)
 
 		if success {
+			updatePodium(UserId)
 			fmt.Fprintf(w, `{"status": "success", "message": "%s"}`, message)
 		} else {
 			w.WriteHeader(http.StatusConflict)
@@ -51,7 +55,6 @@ func main() {
 		util.UpdateHeaderJson(w)
 
 		successCount := 0
-		podium := make(chan int, NoOfPodium)
 		var mu sync.Mutex // mutex for scoring
 		var wg sync.WaitGroup
 
@@ -62,11 +65,7 @@ func main() {
 				defer wg.Done()
 				ok, _ := engine.GrabItem(store)	// Bot fighting for Labubu via engine.GrabItem
 				if ok {
-					select {
-						case podium <-id:
-						default:
-							// Do nothing since podium full already
-					}
+					updatePodium(id)
 					mu.Lock()
 					successCount++
 					mu.Unlock()
@@ -80,7 +79,7 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"bots_captured": successCount,
 			"remaining":     store.Count,
-			"podium_winner": getWinners(podium),
+			"podium_winner": getWinners(),
 		})
 	})
 
@@ -99,17 +98,25 @@ func main() {
 	http.ListenAndServe(port, nil)
 }
 
-func getWinners(podium chan int) string {
+func getWinners() string {
 	var winners string
 
 	PodiumLoop:
 	for i := 0; i < 3; i++ {
 		select {
 			case winner := <-podium:
-				switch i {
-					case 0: winners = fmt.Sprintf("🥇 BOT %d", winner)
-					case 1: winners += fmt.Sprintf("%s🥈 BOT %d", WinnerSeparator, winner)
-					case 2: winners += fmt.Sprintf("%s🥉 BOT %d", WinnerSeparator, winner)
+				if (winner != UserId) {	// Winner is a bot
+					switch i {
+						case 0: winners = fmt.Sprintf("🥇 BOT %d", winner)
+						case 1: winners += fmt.Sprintf("%s🥈 BOT %d", WinnerSeparator, winner)
+						case 2: winners += fmt.Sprintf("%s🥉 BOT %d", WinnerSeparator, winner)
+					}
+				} else {	// Winner is the user
+					switch i {
+						case 0: winners = fmt.Sprintf("🥇 YOU")
+						case 1: winners += fmt.Sprintf("%s🥈 YOU", WinnerSeparator)
+						case 2: winners += fmt.Sprintf("%s🥉 YOU", WinnerSeparator)
+					}
 				}
 			case <-time.After(100 * time.Millisecond):
 				break PodiumLoop
@@ -120,5 +127,13 @@ func getWinners(podium chan int) string {
 		return "No Winner :("
 	} else {
 		return winners
+	}
+}
+
+func updatePodium(id int) {
+	select {
+		case podium <-id:
+		default:
+			// Do nothing since podium full already
 	}
 }
