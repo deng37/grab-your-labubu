@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+const ( HackerDuration = 10.0 )
+
 var userMap sync.Map
 type user struct {
 	sync.Mutex
@@ -34,6 +36,7 @@ func IsUserOverLimit(ip string) bool {
 	}
 
 	if userNow.count >= 5 {	// Over limit
+		fmt.Println("User is over limit")
 		return true
 	} else {
 		userNow.count++
@@ -42,11 +45,8 @@ func IsUserOverLimit(ip string) bool {
 }
 
 func UpdateUserStartTime(ip string, t time.Time) {
-	val, ok := userMap.Load(ip)
-    if !ok {
-        fmt.Println("Not able to update user start time, IP not found: " + ip)
-        return
-    }
+	now := time.Now()
+	val, _ := userMap.LoadOrStore(ip, &user{lastReset: now, count: 0})
 
 	u := val.(*user)
     u.Lock()
@@ -55,11 +55,8 @@ func UpdateUserStartTime(ip string, t time.Time) {
 }
 
 func UpdateUserEndTime(ip string, t time.Time) {
-	val, ok := userMap.Load(ip)
-    if !ok {
-        fmt.Println("Not able to update user start time, IP not found: " + ip)
-        return
-    }
+	now := time.Now()
+	val, _ := userMap.LoadOrStore(ip, &user{lastReset: now, count: 0})
 
 	u := val.(*user)
     u.Lock()
@@ -76,10 +73,15 @@ func GetUserDuration(ip string) float64 {
 
 	u := val.(*user)
 	duration := u.endTime.Sub(u.startTime)
-	if duration < 10*time.Millisecond {
+	durationMS := float64(duration) / float64(time.Millisecond)
+	return durationMS
+}
+
+func IsHacker10Ms(duration float64) bool {
+	if duration < HackerDuration {
 		fmt.Println("Hacker detected")
-		return float64(duration.Nanoseconds()) / 1e6
+		return true
 	} else {
-		return 0
+		return false
 	}
 }

@@ -39,10 +39,14 @@ func main() {
 
 		userIp := util.GetUserIP(r)
 		fmt.Println("IP address: ", userIp)
+		isOverLimit := util.IsUserOverLimit(userIp)
 
 		util.UpdateUserEndTime(userIp, time.Now())
 		duration := util.GetUserDuration(userIp)
-		if util.IsUserOverLimit(userIp) || duration != 0 {	// Prevent unusual click and hacker
+
+		// Prevent unusual click OR IP not found OR is hacker
+		if isOverLimit || duration == 999 || util.IsHacker10Ms(duration) {
+			fmt.Println("Non-human user: ", isOverLimit, duration)
 			w.WriteHeader(http.StatusTooManyRequests)
 			return
 		}
@@ -52,7 +56,7 @@ func main() {
 		if success {
 			updatePodium(UserId)
 			repository.UpsertWinner(userIp, duration)
-			fmt.Fprintf(w, `{"status": "success", "message": "%s"}`, message)
+			fmt.Fprintf(w, `{"status": "success", "message": "%s", "duration": "%v"}`, message, duration)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, `{"status": "failed", "message": "%s"}`, message)
@@ -111,6 +115,14 @@ func main() {
 
 		store.Count = 10
 		w.WriteHeader(http.StatusNoContent)
+	})
+
+	// API /fastest - Getting fastest lap
+	http.HandleFunc("/leaderboard", func(w http.ResponseWriter, r *http.Request) {
+		util.UpdateHeaderJson(w)
+		winners, _ := repository.GetTopWinners(1)
+
+		json.NewEncoder(w).Encode(winners)
 	})
 
 	port := os.Getenv("PORT");

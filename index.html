@@ -14,6 +14,7 @@
         #btn-war { background: #e74c3c; color: white; width: 300px; }
         #btn-reset { background: none; color: rgb(34, 37, 41); padding: 0; margin-bottom: 10px; font-size: 16px; }
         #user-result { margin-top: 5px; color: #ff4d4d; font-weight: bold; }
+        #fastest { margin-top: 10px; color: #555; font-style: italic; font-size: 13px; }
         .user-failed { color: #ff4d4d; }
         .user-success { color: #555; }
         .log { margin-top: 5px; color: #555; font-weight: bold; }
@@ -23,6 +24,24 @@
         .btn-grab-enabled { width: 150px !important; }
         .btn-container-left { display: flex; flex-direction: row; justify-content: space-evenly; }
         .btn-container-right { display: flex; flex-direction: row-reverse; justify-content: space-evenly; }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .screen-shake {
+            animation: shake 0.5s; /* Durasi 0.5 detik */
+            animation-iteration-count: 1; /* Cukup satu kali shake */
+        }
     </style>
 </head>
 <body>
@@ -43,6 +62,7 @@
         <div id="user-result"></div>
         <div class="log" id="status">Ready... 1 2 3 grab!</div>
     </div>
+    <div id="fastest"></div>
 
     <script>
         const btnGrab = document.getElementById('btn-grab');
@@ -50,8 +70,19 @@
         const btnReset = document.getElementById('btn-reset');
         const userResult = document.getElementById('user-result');
         const status = document.getElementById('status');
+        const textFastest = document.getElementById('fastest');
 
         let isUserProcessing = false;
+        let fastestRecord = null;
+
+        fetch('/leaderboard')   // Getting fastest record
+            .then(response => response?.json())
+            .then(data => {
+                if (data && data?.length > 0 && data[0] && data[0]?.duration_ms && data[0]?.duration_ms > 0) {
+                    textFastest.innerText = "All time record: " + data[0]?.duration_ms + " ms";
+                    fastestRecord = data[0]?.duration_ms;
+                }
+            });
 
         // Countdown red lights
         const startRace = () => {
@@ -60,24 +91,23 @@
                 btnGrab.disabled = true;
                 document.querySelectorAll('.light').forEach(l => l.className = 'light');
 
-                document.getElementById('btn-grab').classList.remove('display-none');
-                document.getElementById('btn-war').classList.add('display-none');
+                document.getElementById('btn-grab')?.classList?.remove('display-none');
+                document.getElementById('btn-war')?.classList?.add('display-none');
 
-                setTimeout(() => document.getElementById('l1').classList.add('red'), 1000);
-                setTimeout(() => document.getElementById('l2').classList.add('red'), 2000);
-                setTimeout(() => document.getElementById('l3').classList.add('red'), 3000);
-                setTimeout(() => {
-                    document.getElementById('l1').classList.remove('red');
-                    document.getElementById('l2').classList.remove('red');
-                    document.getElementById('l3').classList.remove('red');
-                    document.getElementById('btn-reset').classList.remove('display-none');
-                    document.getElementById('btn-container')
-                            .classList.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-right");
+                setTimeout(() => document.getElementById('l1')?.classList?.add('red'), 1000);
+                setTimeout(() => document.getElementById('l2')?.classList?.add('red'), 2000);
+                setTimeout(() => document.getElementById('l3')?.classList?.add('red'), 3000);
+                setTimeout( async () =>  {
+                    document.getElementById('l1')?.classList?.remove('red');
+                    document.getElementById('l2')?.classList?.remove('red');
+                    document.getElementById('l3')?.classList?.remove('red');
+                    document.getElementById('btn-reset')?.classList?.remove('display-none');
+                    document.getElementById('btn-container')?.classList?.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-right");
 
+                    await fetch('/war-start');
                     btnGrab.disabled = false;
-                    btnGrab.classList.add('btn-grab-enabled');
-                    document.body.classList.add('cursor-none');
-                    fetch('/war-start');
+                    btnGrab.classList?.add('btn-grab-enabled');
+                    document.body.classList?.add('cursor-none');
 
                     resolve();
                 }, 3500);
@@ -86,7 +116,7 @@
 
         // User Button Trigger
         btnGrab.addEventListener('click', async function(event) {
-            if (!event.isTrusted) {     // Hacker
+            if (!event?.isTrusted) {     // Hacker
                 console.warn("Do not become a hacker please 🗿");
                 return;
             }
@@ -100,23 +130,39 @@
 
             isUserProcessing = true;
             const res = await fetch('/grab');
-            if (res.status === 204 || res.headers.get("content-length") === "0") {    // No data
+            if (res?.status === 204 || res?.headers?.get("content-length") === "0") {    // No data
                 return;
             }
-            const data = await res.json();
-            document.body.classList.remove('cursor-none');
+            const data = await res?.json();
+            document.body.classList?.remove('cursor-none');
 
-            if (data.status == "failed") {
-                document.getElementById('labubu-image').src = "/assets/labubu-sad.png"
-                userResult.classList.add('user-failed');
-                btnGrab.disabled = true;
-            } else if (data.status == "success") {
-                document.getElementById('labubu-image').src = "/assets/labubu-happy.png"
-                userResult.classList.add('user-success');
-                btnGrab.disabled = true;
+            if (data) {
+                userResult.innerHTML = `<span>${data?.message}</span>`;
+                if (data.status == "failed") {
+                    document.getElementById('labubu-image').src = "/assets/labubu-sad.png"
+                    userResult.classList.add('user-failed');
+                    btnGrab.disabled = true;
+                } else if (data.status == "success") {
+                    document.getElementById('labubu-image').src = "/assets/labubu-happy.png"
+                    userResult.classList.add('user-success');
+                    btnGrab.disabled = true;
+
+                    if (data && data.duration) {
+                        const userDuration = data.duration;
+                        if (fastestRecord === null || userDuration < fastestRecord) {
+                            fastestRecord = userDuration;
+                            textFastest.innerText = `All time record: ${Number(fastestRecord).toFixed(2)} ms`;
+                            userResult.innerHTML += " 🏆 BEST RECORD!";
+
+                            // Trigger Shake
+                            document.querySelector('.container').classList.add('screen-shake');
+                            setTimeout(() => {
+                                document.querySelector('.container').classList.remove('screen-shake');
+                            }, 500);
+                        }
+                    }
+                }
             }
-
-            userResult.innerHTML = `<span>${data.message}</span>`;
         });
 
         // Bot Button Trigger
@@ -127,11 +173,11 @@
 
             setTimeout(async () => {    // Give handicap to user
                 const res = await fetch('/war');    // And then release the bots
-                const data = await res.json();
+                const data = await res?.json();
 
                 // Show result
-                status.innerHTML = `<br>Podium: <b>${data.podium_winner}</b><br>` +
-                                    `Remaining stok: <b>${data.remaining}</b>`;
+                status.innerHTML = `<br>Podium: <b>${data?.podium_winner}</b><br>` +
+                                    `Remaining stok: <b>${data?.remaining}</b>`;
             }, 100);
         };
 
@@ -139,14 +185,14 @@
         btnReset.onclick = () => {
             const res = fetch('/reset');
             btnGrab.disabled = true;
-            btnGrab.classList.remove('btn-grab-enabled');
+            btnGrab.classList?.remove('btn-grab-enabled');
 
-            document.getElementById('btn-grab').classList.add('display-none');
-            document.getElementById('btn-reset').classList.add('display-none');
-            document.getElementById('btn-war').classList.remove('display-none');
+            document.getElementById('btn-grab')?.classList?.add('display-none');
+            document.getElementById('btn-reset')?.classList?.add('display-none');
+            document.getElementById('btn-war')?.classList?.remove('display-none');
             document.getElementById('btn-container').className = '';
             document.getElementById('labubu-image').src = "/assets/labubu.png"
-            document.body.classList.remove('cursor-none');
+            document.body.classList?.remove('cursor-none');
 
             userResult.className = '';
             userResult.innerHTML = '';

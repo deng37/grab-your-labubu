@@ -6,10 +6,10 @@ import (
 )
 
 type LeaderboardEntry struct {
-	IP         string
-	UserName   string
-	DurationMS float64
-	UpdatedAt  time.Time
+	IP         string		`json:"ip"`
+	UserName   string		`json:"user_name"`
+	DurationMS float64		`json:"duration_ms"`
+	UpdatedAt  time.Time	`json:"updated_at"`
 }
 
 func UpsertWinner(ip string, duration float64) error {
@@ -40,9 +40,10 @@ func GetTopWinners(limit int) ([]LeaderboardEntry, error) {
 	var list []LeaderboardEntry
 	for rows.Next() {
 		var e LeaderboardEntry
-		if err := rows.Scan(&e.IP, &e.UserName, &e.DurationMS); err == nil {
+		if err := rows.Scan(&e.IP, &e.DurationMS); err == nil {
 			list = append(list, e)
 		}
 	}
+
 	return list, nil
 }
