@@ -14,6 +14,8 @@
         #btn-war { background: #e74c3c; color: white; width: 300px; }
         #btn-reset { background: none; color: rgb(34, 37, 41); padding: 0; margin-bottom: 10px; font-size: 16px; }
         #user-result { margin-top: 5px; color: #ff4d4d; font-weight: bold; }
+        .user-failed { color: #ff4d4d; }
+        .user-success { color: #555; }
         .log { margin-top: 5px; color: #555; font-weight: bold; }
         .main-image { width: 200px; margin-top: 30px; }
         .display-none { display: none; }
@@ -78,11 +80,22 @@
             });
         };
 
-        // User Grab Button Trigger
+        // User Button Trigger
         btnGrab.onclick = async () => {
             const res = await fetch('/grab');
             const data = await res.json();
             document.body.classList.remove('cursor-none');
+
+            if (data.status == "failed") {
+                document.getElementById('labubu-image').src = "/assets/labubu-sad.png"
+                userResult.classList.add('user-failed')
+                btnGrab.disabled = true
+            } else if (data.status == "success") {
+                document.getElementById('labubu-image').src = "/assets/labubu-happy.png"
+                userResult.classList.add('user-success')
+                btnGrab.disabled = true
+            }
+
             userResult.innerHTML = `<span>${data.message}</span>`;
         };
 
@@ -92,12 +105,14 @@
 
             await startRace(); // Wait the lights
 
-            const res = await fetch('/war');    // And then release the bots
-            const data = await res.json();
+            setTimeout(async () => {    // Give handicap to user
+                const res = await fetch('/war');    // And then release the bots
+                const data = await res.json();
 
-            // Show result
-            status.innerHTML = `<br>Podium: <b>${data.podium_winner}</b><br>` +
-                                `Remaining stok: <b>${data.remaining}</b>`;
+                // Show result
+                status.innerHTML = `<br>Podium: <b>${data.podium_winner}</b><br>` +
+                                    `Remaining stok: <b>${data.remaining}</b>`;
+            }, 100);
         };
 
         // Reset Button
@@ -109,6 +124,7 @@
             document.getElementById('btn-reset').classList.add('display-none');
             document.getElementById('btn-war').classList.remove('display-none');
             document.getElementById('btn-container').className = "";
+            document.getElementById('labubu-image').src = "/assets/labubu.png"
             document.body.classList.remove('cursor-none');
             userResult.innerHTML = '';
             status.innerHTML = 'Ready... 1 2 3 grab!';
