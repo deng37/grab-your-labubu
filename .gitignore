@@ -11,7 +11,7 @@ grab-your-labubu
 go.work
 
 # Database SQLite (Ignore so will not clash with server)
-*.db
+*.db*
 *.db-journal
 
 # Metadata OS

@@ -67,19 +67,19 @@ func UpdateUserEndTime(ip string, t time.Time) {
     u.endTime = t
 }
 
-func IsHacker10Ms(ip string) bool {
+func GetUserDuration(ip string) float64 {
 	val, ok := userMap.Load(ip)
     if !ok {
         fmt.Println("Not able to update user start time, IP not found: " + ip)
-        return true
+        return 999
     }
 
 	u := val.(*user)
 	duration := u.endTime.Sub(u.startTime)
 	if duration < 10*time.Millisecond {
 		fmt.Println("Hacker detected")
-		return true
+		return float64(duration.Nanoseconds()) / 1e6
 	} else {
-		return false
+		return 0
 	}
 }

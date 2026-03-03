@@ -10,6 +10,7 @@ import (
 	"github.com/deng37/grab-your-labubu/engine"
 	"github.com/deng37/grab-your-labubu/model"
 	"github.com/deng37/grab-your-labubu/util"
+	"github.com/deng37/grab-your-labubu/repository"
 )
 
 const ( WinnerSeparator = ", " )
@@ -24,6 +25,7 @@ var podium chan int = make(chan int, NoOfPodium)
 
 func main() {
 	// Init
+	util.InitDB()
 	store := &model.LabubuStore{
 		StockName: "Labubu Tasty Macarons",
 		Count: NoOfStock,
@@ -37,8 +39,10 @@ func main() {
 
 		userIp := util.GetUserIP(r)
 		fmt.Println("IP address: ", userIp)
+
 		util.UpdateUserEndTime(userIp, time.Now())
-		if util.IsUserOverLimit(userIp) || util.IsHacker10Ms(userIp) {	// Prevent unusual click and hacker
+		duration := util.GetUserDuration(userIp)
+		if util.IsUserOverLimit(userIp) || duration != 0 {	// Prevent unusual click and hacker
 			w.WriteHeader(http.StatusTooManyRequests)
 			return
 		}
@@ -47,6 +51,7 @@ func main() {
 
 		if success {
 			updatePodium(UserId)
+			repository.UpsertWinner(userIp, duration)
 			fmt.Fprintf(w, `{"status": "success", "message": "%s"}`, message)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
