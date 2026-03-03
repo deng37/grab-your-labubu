@@ -51,6 +51,8 @@
         const userResult = document.getElementById('user-result');
         const status = document.getElementById('status');
 
+        let isUserProcessing = false;
+
         // Countdown red lights
         const startRace = () => {
             return new Promise((resolve) => {
@@ -70,34 +72,52 @@
                     document.getElementById('l3').classList.remove('red');
                     document.getElementById('btn-reset').classList.remove('display-none');
                     document.getElementById('btn-container')
-                            .classList.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-left");
+                            .classList.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-right");
 
                     btnGrab.disabled = false;
                     btnGrab.classList.add('btn-grab-enabled');
                     document.body.classList.add('cursor-none');
+                    fetch('/war-start');
+
                     resolve();
                 }, 3500);
             });
         };
 
         // User Button Trigger
-        btnGrab.onclick = async () => {
+        btnGrab.addEventListener('click', async function(event) {
+            if (!event.isTrusted) {     // Hacker
+                console.warn("Do not become a hacker please 🗿");
+                return;
+            }
+
+            if (isUserProcessing) { return; }   // Only 1 user allowed per one time
+
+            if (btnGrab.disabled) {     // Prevent button click on script
+                console.warn("Do not cheat please 🗿");
+                return;
+            }
+
+            isUserProcessing = true;
             const res = await fetch('/grab');
+            if (res.status === 204 || res.headers.get("content-length") === "0") {    // No data
+                return;
+            }
             const data = await res.json();
             document.body.classList.remove('cursor-none');
 
             if (data.status == "failed") {
                 document.getElementById('labubu-image').src = "/assets/labubu-sad.png"
-                userResult.classList.add('user-failed')
-                btnGrab.disabled = true
+                userResult.classList.add('user-failed');
+                btnGrab.disabled = true;
             } else if (data.status == "success") {
                 document.getElementById('labubu-image').src = "/assets/labubu-happy.png"
-                userResult.classList.add('user-success')
-                btnGrab.disabled = true
+                userResult.classList.add('user-success');
+                btnGrab.disabled = true;
             }
 
             userResult.innerHTML = `<span>${data.message}</span>`;
-        };
+        });
 
         // Bot Button Trigger
         btnWar.onclick = async () => {
@@ -120,13 +140,18 @@
             const res = fetch('/reset');
             btnGrab.disabled = true;
             btnGrab.classList.remove('btn-grab-enabled');
+
             document.getElementById('btn-grab').classList.add('display-none');
             document.getElementById('btn-reset').classList.add('display-none');
             document.getElementById('btn-war').classList.remove('display-none');
-            document.getElementById('btn-container').className = "";
+            document.getElementById('btn-container').className = '';
             document.getElementById('labubu-image').src = "/assets/labubu.png"
             document.body.classList.remove('cursor-none');
+
+            userResult.className = '';
             userResult.innerHTML = '';
+
+            isUserProcessing = false;
             status.innerHTML = 'Ready... 1 2 3 grab!';
         };
     </script>

@@ -19,6 +19,7 @@ const ( NoOfPodium = 3 )
 const ( DefaultPort = "8080" )
 const ( EmptyString = "" )
 
+var warStartTime time.Time
 var podium chan int = make(chan int, NoOfPodium)
 
 func main() {
@@ -30,9 +31,17 @@ func main() {
 	fs := http.FileServer(http.Dir("assets"))
 	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-	// Grab Labubu
+	// API /grab - Grab Labubu
 	http.HandleFunc("/grab", func(w http.ResponseWriter, r *http.Request) {
 		util.UpdateHeaderJson(w)
+
+		userIp := util.GetUserIP(r)
+		fmt.Println("IP address: ", userIp)
+		util.UpdateUserEndTime(userIp, time.Now())
+		if util.IsUserOverLimit(userIp) || util.IsHacker10Ms(userIp) {	// Prevent unusual click and hacker
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
 
 		success, message := engine.GrabItem(store)
 
@@ -40,22 +49,29 @@ func main() {
 			updatePodium(UserId)
 			fmt.Fprintf(w, `{"status": "success", "message": "%s"}`, message)
 		} else {
-			w.WriteHeader(http.StatusConflict)
+			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, `{"status": "failed", "message": "%s"}`, message)
 		}
 	})
 
-	// Serve HTML
+	// API / - Serve HTML
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
 
-	// Fighting Labubu
+	// API /war-start - Serve HTML
+	http.HandleFunc("/war-start", func(w http.ResponseWriter, r *http.Request) {
+		userIp := util.GetUserIP(r)
+		util.UpdateUserStartTime(userIp, time.Now())
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	// API /war - Bot Coming to Arena
 	http.HandleFunc("/war", func(w http.ResponseWriter, r *http.Request) {
 		util.UpdateHeaderJson(w)
 
 		successCount := 0
-		var mu sync.Mutex // mutex for scoring
+		var muWar sync.Mutex // mutex for scoring
 		var wg sync.WaitGroup
 
 		// Release 100 bots
@@ -66,9 +82,9 @@ func main() {
 				ok, _ := engine.GrabItem(store)	// Bot fighting for Labubu via engine.GrabItem
 				if ok {
 					updatePodium(id)
-					mu.Lock()
+					muWar.Lock()
 					successCount++
-					mu.Unlock()
+					muWar.Unlock()
 					fmt.Printf("Bot #%d got Labubu!\n", id)
 				}
 			}(i)
@@ -83,8 +99,11 @@ func main() {
 		})
 	})
 
-	// Stock Reset
+	// API /reset - Stock Reset
 	http.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
+		store.Lock()
+		defer store.Unlock()
+
 		store.Count = 10
 		w.WriteHeader(http.StatusNoContent)
 	})

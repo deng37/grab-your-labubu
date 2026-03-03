@@ -6,8 +6,8 @@ import (
 
 // To return boolean whether got the Labubu or not, with the message value
 func GrabItem(store *model.LabubuStore) (bool, string) {
-	store.Mu.Lock()
-	defer store.Mu.Unlock()
+	store.Lock()
+	defer store.Unlock()
 
 	if store.Count > 0 {
 		store.Count--
