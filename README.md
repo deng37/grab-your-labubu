@@ -60,5 +60,7 @@ go run main.go
 
 ---
 
-### 🤝 Contributing
-This is an experimental project. Feel free to open an issue or submit a Pull Request!
+### ✋🏻 Copyright Info
+This project is for personal, non-commercial experimentation only.
+Labubu is a character owned by Pop Mart / Kasing Lung.
+No copyright infringement intended.
