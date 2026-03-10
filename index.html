@@ -109,7 +109,7 @@
                     document.getElementById('l2')?.classList?.remove('red');
                     document.getElementById('l3')?.classList?.remove('red');
                     document.getElementById('btn-reset')?.classList?.remove('display-none');
-                    document.getElementById('btn-container')?.classList?.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-left");
+                    document.getElementById('btn-container')?.classList?.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-right");
 
                     await fetch('/war-start', { headers: { 'X-API-KEY': API_KEY } });
                     btnGrab.disabled = false;
