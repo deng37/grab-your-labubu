@@ -47,15 +47,21 @@ go run cmd/api/main.go
 ### 🏗 Project Structure
 ```
 .
-├── assets/             # Frontend files (HTML, CSS, JS)
-├── engine/             # Core business logic (War/Grab rules, Anti-cheat)
-├── model/              # Data structures and entities (User, Leaderboard)
-├── repository/         # Data access layer (SQLite queries, Transactions)
-├── util/               # Helper functions (Config, Logger, Time formatting)
-├── main.go             # Application entry point & router initialization
-├── Dockerfile          # Optimized multi-stage build
-├── .dockerignore       # Excluding local DB and temp files
-└── fly.toml            # Fly.io infrastructure configuration
+├── assets/             # Static files (Images, CSS, Client-side JS)
+├── cmd/
+│   └── api/
+│       └── main.go     # Application entry point & router initialization
+├── internal/           # Private application and library code
+│   ├── engine/         # Core business logic (War/Grab rules, Concurrency)
+│   ├── middleware/     # Custom HTTP Middlewares (Auth, CORS, Logging)
+│   ├── model/          # Data structures and entities
+│   ├── repository/     # Data access layer (SQLite/DB operations)
+│   └── util/           # Shared helpers (IP Tracking, Headers, Config)
+├── index.html          # Main landing page for the "Labubu War" arena
+├── Dockerfile          # Optimized multi-stage build (Alpine-based)
+├── fly.toml            # Fly.io infrastructure & auto-scaling config
+├── Makefile            # Automation shortcuts (run, build, deploy)
+└── go.mod              # Go module dependency management
 ```
 
 ---
