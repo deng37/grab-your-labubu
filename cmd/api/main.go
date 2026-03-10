@@ -6,6 +6,7 @@ import (
 	"time"
 	"net/http"
 	"os"
+	"html/template"
 	"sync"           // Mutex dan WaitGroup (For 100 Bots)
 	"github.com/rs/cors"
 	"github.com/deng37/grab-your-labubu/internal/engine"
@@ -68,7 +69,17 @@ func main() {
 
 	// API / - Serve HTML
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		tmpl, err := template.ParseFiles("index.html")
+    if err != nil {
+        http.Error(w, "HTML not found", http.StatusInternalServerError)
+        return
+    }
+
+    // Send API key
+    data := map[string]string{
+        "ApiKey": os.Getenv("LABUBU_API_KEY"),
+    }
+    tmpl.Execute(w, data)
 	})
 
 	// API /war-start - Serve HTML

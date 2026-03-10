@@ -77,11 +77,12 @@
         const userResult = document.getElementById('user-result');
         const status = document.getElementById('status');
         const textFastest = document.getElementById('fastest');
+        const API_KEY = "{{.ApiKey}}";
 
         let isUserProcessing = false;
         let fastestRecord = null;
 
-        fetch('/leaderboard')   // Getting fastest record
+        fetch('/leaderboard', { headers: { 'X-API-KEY': API_KEY } })   // Getting fastest record
             .then(response => response?.json())
             .then(data => {
                 if (data && data?.length > 0 && data[0] && data[0]?.duration_ms && data[0]?.duration_ms > 0) {
@@ -108,9 +109,9 @@
                     document.getElementById('l2')?.classList?.remove('red');
                     document.getElementById('l3')?.classList?.remove('red');
                     document.getElementById('btn-reset')?.classList?.remove('display-none');
-                    document.getElementById('btn-container')?.classList?.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-right");
+                    document.getElementById('btn-container')?.classList?.add(Math.random() > 0.5 ? "btn-container-left" : "btn-container-left");
 
-                    await fetch('/war-start');
+                    await fetch('/war-start', { headers: { 'X-API-KEY': API_KEY } });
                     btnGrab.disabled = false;
                     btnGrab.classList?.add('btn-grab-enabled');
                     document.body.classList?.add('cursor-none');
@@ -135,7 +136,7 @@
             }
 
             isUserProcessing = true;
-            const res = await fetch('/grab');
+            const res = await fetch('/grab', { headers: { 'X-API-KEY': API_KEY } });
             if (res?.status === 204 || res?.headers?.get("content-length") === "0") {    // No data
                 return;
             }
@@ -178,7 +179,7 @@
             await startRace(); // Wait the lights
 
             setTimeout(async () => {    // Give handicap to user
-                const res = await fetch('/war');    // And then release the bots
+                const res = await fetch('/war', { headers: { 'X-API-KEY': API_KEY } });    // And then release the bots
                 const data = await res?.json();
 
                 // Show result
@@ -189,7 +190,7 @@
 
         // Reset Button
         btnReset.onclick = () => {
-            const res = fetch('/reset');
+            const res = fetch('/reset', { headers: { 'X-API-KEY': API_KEY } });
             btnGrab.disabled = true;
             btnGrab.classList?.remove('btn-grab-enabled');
 

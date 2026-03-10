@@ -1,6 +1,6 @@
 # Variabel
 APP_NAME=grab-your-labubu
-SERVER_MAIN=cmd/server/main.go
+SERVER_MAIN=cmd/api/main.go
 
 # 1. Run in local
 run:
