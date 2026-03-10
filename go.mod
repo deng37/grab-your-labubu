@@ -2,7 +2,10 @@ module github.com/deng37/grab-your-labubu
 
 go 1.25.0
 
-require modernc.org/sqlite v1.46.1
+require (
+	github.com/rs/cors v1.11.1
+	modernc.org/sqlite v1.46.1
+)
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect

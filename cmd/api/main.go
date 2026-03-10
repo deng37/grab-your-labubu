@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"os"
 	"sync"           // Mutex dan WaitGroup (For 100 Bots)
+	"github.com/rs/cors"
 	"github.com/deng37/grab-your-labubu/internal/engine"
 	"github.com/deng37/grab-your-labubu/internal/model"
 	"github.com/deng37/grab-your-labubu/internal/util"
 	"github.com/deng37/grab-your-labubu/internal/repository"
+	"github.com/deng37/grab-your-labubu/internal/middleware"
 )
 
 const ( WinnerSeparator = ", " )
@@ -30,11 +32,12 @@ func main() {
 		StockName: "Labubu Tasty Macarons",
 		Count: NoOfStock,
 	}
+	mux := http.NewServeMux()
 	fs := http.FileServer(http.Dir("assets"))
-	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
+	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	// API /grab - Grab Labubu
-	http.HandleFunc("/grab", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/grab", func(w http.ResponseWriter, r *http.Request) {
 		util.UpdateHeaderJson(w)
 
 		userIp := util.GetUserIP(r)
@@ -64,19 +67,19 @@ func main() {
 	})
 
 	// API / - Serve HTML
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
 
 	// API /war-start - Serve HTML
-	http.HandleFunc("/war-start", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/war-start", func(w http.ResponseWriter, r *http.Request) {
 		userIp := util.GetUserIP(r)
 		util.UpdateUserStartTime(userIp, time.Now())
 		w.WriteHeader(http.StatusNoContent)
 	})
 
 	// API /war - Bot Coming to Arena
-	http.HandleFunc("/war", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/war", func(w http.ResponseWriter, r *http.Request) {
 		util.UpdateHeaderJson(w)
 
 		successCount := 0
@@ -109,7 +112,7 @@ func main() {
 	})
 
 	// API /reset - Stock Reset
-	http.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
 		store.Lock()
 		defer store.Unlock()
 
@@ -118,7 +121,7 @@ func main() {
 	})
 
 	// API /leaderboard - Getting fastest lap
-	http.HandleFunc("/leaderboard", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/leaderboard", func(w http.ResponseWriter, r *http.Request) {
 		util.UpdateHeaderJson(w)
 		winners, _ := repository.GetTopWinners(1)
 
@@ -131,7 +134,17 @@ func main() {
 	}
 	port = ":" + port;
 	fmt.Println("🚀 Labubu server running on http://localhost" + port)
-	http.ListenAndServe(port, nil)
+
+	handler := middleware.AuthMiddleware(mux)
+	c := cors.New(cors.Options{	// Setup CORS
+		AllowedOrigins: []string{
+				"https://denver-ten-portfolio.vercel.app",
+		},
+		AllowedHeaders: []string{"X-API-KEY", "Content-Type"},
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+	})
+	httpHandler := c.Handler(handler)
+	http.ListenAndServe(port, httpHandler)
 }
 
 func getWinners() string {
