@@ -37,7 +37,7 @@ git clone https://github.com/deng37/grab-your-labubu.git
 cd grab-your-labubu
 
 2️⃣ Run the application
-go run main.go
+go run cmd/api/main.go
 
 3️⃣ The app will be available at http://localhost:8080
 ```

@@ -2,7 +2,7 @@ package engine
 
 import (
 	"testing"
-	"github.com/deng37/grab-your-labubu/model"
+	"github.com/deng37/grab-your-labubu/internal/model"
 )
 
 func TestGrabItem(t *testing.T) {

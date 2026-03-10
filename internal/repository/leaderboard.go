@@ -2,7 +2,7 @@ package repository
 
 import (
 	"time"
-	"github.com/deng37/grab-your-labubu/util"
+	"github.com/deng37/grab-your-labubu/internal/util"
 )
 
 type LeaderboardEntry struct {

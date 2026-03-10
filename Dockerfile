@@ -4,7 +4,7 @@ WORKDIR /app
 COPY . .
 RUN go mod download
 # Build binary statis
-RUN CGO_ENABLED=0 GOOS=linux go build -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd/server/main.go
 
 # Stage 2: Runtime
 FROM alpine:latest

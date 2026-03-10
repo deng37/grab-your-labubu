@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 	"sync"           // Mutex dan WaitGroup (For 100 Bots)
-	"github.com/deng37/grab-your-labubu/engine"
-	"github.com/deng37/grab-your-labubu/model"
-	"github.com/deng37/grab-your-labubu/util"
-	"github.com/deng37/grab-your-labubu/repository"
+	"github.com/deng37/grab-your-labubu/internal/engine"
+	"github.com/deng37/grab-your-labubu/internal/model"
+	"github.com/deng37/grab-your-labubu/internal/util"
+	"github.com/deng37/grab-your-labubu/internal/repository"
 )
 
 const ( WinnerSeparator = ", " )
@@ -117,7 +117,7 @@ func main() {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	// API /fastest - Getting fastest lap
+	// API /leaderboard - Getting fastest lap
 	http.HandleFunc("/leaderboard", func(w http.ResponseWriter, r *http.Request) {
 		util.UpdateHeaderJson(w)
 		winners, _ := repository.GetTopWinners(1)

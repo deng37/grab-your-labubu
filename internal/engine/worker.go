@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"github.com/deng37/grab-your-labubu/model"
+	"github.com/deng37/grab-your-labubu/internal/model"
 )
 
 // To return boolean whether got the Labubu or not, with the message value
